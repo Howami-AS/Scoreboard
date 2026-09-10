@@ -27,7 +27,7 @@ const Voice = (() => {
   }
 
   function announceWinner(name) {
-    speak(`${name} venceu a partida!`);
+    speak(`Time ganhador: ${name}.`);
   }
 
   return { supported, speak, announceScore, announceWinner };

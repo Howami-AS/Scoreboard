@@ -493,6 +493,17 @@ a { color: var(--amber); }
 
 .player-panel[data-player="2"] { background: var(--p2); }
 
+.winner-label {
+  min-height: 1.2em;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  opacity: 0;
+}
+
+.winner-label.is-visible { opacity: 1; }
+
 .player-panel.set-victory {
   z-index: 2;
   animation: set-victory 1.15s ease both;
@@ -584,6 +595,15 @@ a { color: var(--amber); }
   line-height: 1;
   font-weight: 800;
   color: #fff;
+}
+
+.player-score.winner-name {
+  max-width: 100%;
+  font-family: var(--font-ui);
+  font-size: clamp(2rem, 5vw, 5rem);
+  line-height: 1.05;
+  text-align: center;
+  overflow-wrap: anywhere;
 }
 
 .player-score.bump { animation: bump .28s ease; }

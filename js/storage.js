@@ -50,8 +50,10 @@ const Storage = (() => {
     // ---------- Partidas ----------
     async saveMatch(match) {
       const store = await tx(STORE_MATCHES, 'readwrite');
+      const record = { ...match };
+      if (!match.id) delete record.id;
       return new Promise((resolve, reject) => {
-        const req = match.id ? store.put(match) : store.add(match);
+        const req = match.id ? store.put(record) : store.add(record);
         req.onsuccess = (e) => resolve(e.target.result);
         req.onerror = (e) => reject(e.target.error);
       });

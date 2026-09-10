@@ -248,6 +248,8 @@
   const p2ScoreEl = document.getElementById('p2-score');
   const p1NameEl = document.getElementById('p1-display-name');
   const p2NameEl = document.getElementById('p2-display-name');
+  const p1WinnerEl = document.getElementById('p1-winner');
+  const p2WinnerEl = document.getElementById('p2-winner');
   const p1SubEl = document.getElementById('p1-sub');
   const p2SubEl = document.getElementById('p2-sub');
   const gameMetaEl = document.getElementById('game-meta');
@@ -269,8 +271,16 @@
 
     p1NameEl.textContent = m.player1;
     p2NameEl.textContent = m.player2;
-    p1ScoreEl.textContent = d.big1;
-    p2ScoreEl.textContent = d.big2;
+    [p1WinnerEl, p2WinnerEl].forEach((element, index) => {
+      const isWinner = m.winner === index + 1;
+      element.classList.toggle('is-visible', isWinner);
+      element.setAttribute('aria-hidden', String(!isWinner));
+    });
+    [p1ScoreEl, p2ScoreEl].forEach((element, index) => {
+      const isWinner = m.winner === index + 1;
+      element.textContent = isWinner ? (index === 0 ? m.player1 : m.player2) : (index === 0 ? d.big1 : d.big2);
+      element.classList.toggle('winner-name', isWinner);
+    });
     p1SubEl.textContent = d.sub1;
     p2SubEl.textContent = d.sub2;
     setsP1El.textContent = d.setsWon[0];
@@ -419,6 +429,7 @@
     askConfirm('Finalizar a partida com o placar atual?', async () => {
       stopTimer();
       Scoreboard.finishManually();
+      renderGame();
       await Scoreboard.persist();
       showVictory(m);
     });
