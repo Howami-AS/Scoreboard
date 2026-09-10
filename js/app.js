@@ -20,6 +20,34 @@
     window.scrollTo(0, 0);
   }
 
+  async function enterGameDisplay() {
+    try {
+      if (!document.fullscreenElement) {
+        const requestFullscreen = document.documentElement.requestFullscreen
+          || document.documentElement.webkitRequestFullscreen;
+        if (requestFullscreen) await requestFullscreen.call(document.documentElement);
+      }
+    } catch (err) {
+      // Tela cheia pode ser bloqueada pelo navegador ou indisponível no dispositivo.
+    }
+    try {
+      if (screen.orientation && screen.orientation.lock) {
+        await screen.orientation.lock('landscape');
+      }
+    } catch (err) {
+      // O bloqueio pode não estar disponível fora de uma PWA instalada.
+    }
+  }
+
+  function leaveGameDisplay() {
+    if (screen.orientation && screen.orientation.unlock) {
+      screen.orientation.unlock();
+    }
+    if (document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen().catch(() => {});
+    }
+  }
+
   // ------------------------------------------------------------------
   // Feedback: som (WebAudio, sem arquivos) e vibração
   // ------------------------------------------------------------------
@@ -231,6 +259,7 @@
     renderGame();
     startTimer(true);
     showView('game');
+    enterGameDisplay();
   }
 
   function renderGame() {
@@ -425,11 +454,13 @@
       askConfirm('Sair sem salvar o progresso da partida?', () => {
         stopTimer();
         Scoreboard.clear();
+        leaveGameDisplay();
         showView('home');
       });
     } else {
       stopTimer();
       Scoreboard.clear();
+      leaveGameDisplay();
       showView('home');
     }
   }
@@ -629,6 +660,7 @@
         hideVictory();
         stopTimer();
         Scoreboard.clear();
+        leaveGameDisplay();
         showView('home');
         break;
 

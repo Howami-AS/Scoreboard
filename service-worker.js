@@ -5,7 +5,7 @@
    segundo plano (stale-while-revalidate) quando há rede disponível.
    ========================================================================== */
 
-const CACHE_VERSION = 'scoreboard-v1';
+const CACHE_VERSION = 'scoreboard-v2';
 const PRECACHE_URLS = [
   './',
   './index.html',

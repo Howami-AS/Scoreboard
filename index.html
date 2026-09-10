@@ -151,12 +151,6 @@
 
   <!-- ===================== PLACAR ===================== -->
   <section class="view game-view" id="view-game" data-view="game">
-    <div class="game-topbar">
-      <button class="icon-btn" data-action="exit-game" aria-label="Sair da partida">←</button>
-      <div class="spacer"></div>
-      <button class="icon-btn" data-action="toggle-voice" aria-label="Anunciar pontuação por voz" id="voice-quick-toggle">🔊</button>
-    </div>
-
     <div class="board">
       <div class="player-panel" data-player="1">
         <button class="edit-btn" data-action="edit-name" data-player="1" aria-label="Editar nome do jogador 1">✎</button>
@@ -191,12 +185,13 @@
           <span class="crown-score p2" id="sets-p2">0</span>
         </div>
         <p class="meta-caption" id="game-meta"></p>
+        <div class="game-actions">
+          <button class="game-control-btn" data-action="exit-game" aria-label="Voltar" title="Voltar">←</button>
+          <button class="game-control-btn" data-action="toggle-voice" aria-label="Ativar voz" title="Ativar voz" id="voice-quick-toggle">🔊</button>
+          <button class="game-control-btn" data-action="reset-match" aria-label="Reiniciar placar" title="Reiniciar placar">↻</button>
+          <button class="game-control-btn finish-control-btn" data-action="finish-match" aria-label="Finalizar partida" title="Finalizar partida">✓</button>
+        </div>
       </div>
-    </div>
-
-    <div class="game-actions">
-      <button class="btn btn-secondary btn-sm" data-action="reset-match">Reiniciar placar</button>
-      <button class="btn btn-primary btn-sm" data-action="finish-match">Finalizar partida</button>
     </div>
   </section>
 
