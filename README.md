@@ -1,15 +1,19 @@
 # Scoreboard
 
-Marcador de pontuação universal, instalável como PWA, para partidas entre 2 jogadores ou equipes — cartas, sinuca, dominó, truco, futebol, vôlei, basquete, tênis e qualquer outro jogo com placar.
+Marcador de pontuação instalável como PWA, com as **regras oficiais de Vôlei e Beach Tennis**.
 
 ## Recursos
 
-- Placar grande, tátil e rápido de usar (+1 / +5 / +10 / −1)
-- Metas de pontos com detecção automática de vitória
-- Desfazer, reiniciar e finalizar partida manualmente
-- Histórico completo com filtros por jogador e período
-- Detalhe de cada partida com o histórico de pontos evento a evento
-- Personalização: nomes, cores dos jogadores, tema claro/escuro, pontuação inicial, incremento, meta padrão
+- **Menu de esporte**: escolha entre Vôlei ou Beach Tennis antes de cada partida
+- **Vôlei**: rally point, sets a 25 pontos (15 no tie-break), vitória por 2 de diferença, melhor de 3 ou 5 sets
+- **Beach Tennis**: pontuação 0/15/30/40, sem vantagem (Golden Point) opcional, sets a 6 games com tie-break de 7 pontos em 5-5, e match tie-break (super tie-break) de 10 pontos quando os sets ficam 1 a 1 — tudo configurável
+- Placar com um único botão **PONTO** por jogador — cada toque avança exatamente como a regra do esporte manda (o app decide sozinho quando fecha o game, o set e a partida)
+- Cronômetro da partida com play/pause e reinício
+- Selo de sets vencidos sempre visível
+- Edição do nome do jogador direto na tela do placar (ícone de lápis)
+- Desfazer (reconstrói o placar a partir do histórico de pontos, respeitando sets/tie-breaks), reiniciar e finalizar manualmente
+- Histórico completo com sets de cada partida, filtros por jogador e período
+- Personalização: nomes, cores dos jogadores, tema claro/escuro, formato de cada esporte (sets, pontos, games, vantagem)
 - Anúncio de pontuação por voz (Web Speech API), efeitos sonoros e vibração — todos opcionais
 - Exportação e importação de backup em JSON
 - 100% local: sem login, sem cadastro, sem servidor, sem anúncios

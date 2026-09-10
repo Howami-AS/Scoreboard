@@ -7,14 +7,22 @@
 const Settings = (() => {
   const DEFAULTS = {
     theme: 'dark',
-    defaultStartScore: 0,
-    defaultTarget: 12,
-    defaultIncrement: 1,
     voiceEnabled: false,
     soundEnabled: true,
     vibrationEnabled: true,
     color1: '#E24949',
     color2: '#3E7CE0',
+    volei: {
+      setsToWin: 3,        // 3 = melhor de 5 (oficial); 2 = melhor de 3
+      pointsPerSet: 25,
+      pointsDecider: 15,
+    },
+    beachTennis: {
+      setsToWin: 2,        // 2 = melhor de 3 (oficial); 1 = set único
+      gamesPerSet: 6,
+      noAd: true,
+      superTiebreak: true,
+    },
   };
 
   let current = { ...DEFAULTS };

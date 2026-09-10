@@ -91,9 +91,10 @@
   function showVictory(m) {
     const name1 = m.player1, name2 = m.player2;
     const winnerLabel = m.winner === 'draw' ? 'Empate!' : `${m.winner === 1 ? name1 : name2} venceu!`;
+    const setsLine = m.state.setHistory.map((s) => `${s.p1}-${s.p2}`).join(', ') || '—';
     document.getElementById('victory-winner').textContent = winnerLabel;
-    document.getElementById('victory-score').textContent = `${name1} ${m.score1} × ${m.score2} ${name2}`;
-    document.getElementById('victory-datetime').textContent = History.formatDateTime(m.finishedAt || Date.now());
+    document.getElementById('victory-score').textContent = `${m.state.setsWon[0]} × ${m.state.setsWon[1]} sets`;
+    document.getElementById('victory-datetime').textContent = `${setsLine} · ${History.formatDateTime(m.finishedAt || Date.now())}`;
     victoryModal.classList.add('is-active');
     vibrate([30, 40, 30]);
     playBeep(880, 160);
@@ -106,22 +107,71 @@
   }
 
   // ------------------------------------------------------------------
-  // NOVA PARTIDA — formulário
+  // ESCOLHA DO ESPORTE
+  // ------------------------------------------------------------------
+  function openSportPicker() {
+    showView('sport');
+  }
+
+  function sportLabel(sport) {
+    return sport === 'volei' ? 'Vôlei' : 'Beach Tennis';
+  }
+
+  // ------------------------------------------------------------------
+  // NOVA PARTIDA — formulário (campos variam por esporte)
   // ------------------------------------------------------------------
   const newForm = document.getElementById('new-match-form');
   const colorInput = document.getElementById('color-input');
+  const voleiFieldsEl = document.getElementById('volei-fields');
+  const beachFieldsEl = document.getElementById('beach-fields');
   let colorTargetPlayer = null;
   let pickedColor1 = null;
   let pickedColor2 = null;
+  let selectedSport = 'volei';
 
-  function openNewMatchForm() {
+  function buildVoleiConfigFromSettings(s) {
+    return {
+      setsToWin: s.volei.setsToWin,
+      pointsPerSet: s.volei.pointsPerSet,
+      pointsDecider: s.volei.pointsDecider,
+    };
+  }
+
+  function buildBeachConfigFromSettings(s) {
+    return {
+      setsToWin: s.beachTennis.setsToWin,
+      gamesPerSet: s.beachTennis.gamesPerSet,
+      noAd: s.beachTennis.noAd,
+      superTiebreak: s.beachTennis.superTiebreak,
+    };
+  }
+
+  function openNewMatchForm(sport) {
+    selectedSport = sport;
     const s = Settings.get();
-    document.getElementById('p1-name').value = 'Jogador 1';
-    document.getElementById('p2-name').value = 'Jogador 2';
-    document.getElementById('start-score').value = s.defaultStartScore;
-    document.getElementById('target-score').value = s.defaultTarget;
-    document.getElementById('increment').value = s.defaultIncrement;
-    document.getElementById('allow-negative').checked = false;
+
+    document.getElementById('new-match-title').textContent = `Nova partida · ${sportLabel(sport)}`;
+    const defaultName1 = sport === 'volei' ? 'Time 1' : 'Dupla 1';
+    const defaultName2 = sport === 'volei' ? 'Time 2' : 'Dupla 2';
+    document.getElementById('p1-name-label').textContent = defaultName1;
+    document.getElementById('p2-name-label').textContent = defaultName2;
+    document.getElementById('p1-name').value = defaultName1;
+    document.getElementById('p2-name').value = defaultName2;
+
+    voleiFieldsEl.classList.toggle('hidden', sport !== 'volei');
+    beachFieldsEl.classList.toggle('hidden', sport !== 'beach-tennis');
+
+    if (sport === 'volei') {
+      document.getElementById('volei-format').value = String(s.volei.setsToWin === 1 ? 1 : (s.volei.setsToWin === 3 ? 5 : 3));
+      document.getElementById('volei-points').value = s.volei.pointsPerSet;
+      document.getElementById('volei-points-decider').value = s.volei.pointsDecider;
+    } else {
+      document.getElementById('beach-format').value = String(s.beachTennis.setsToWin === 2 ? 3 : 1);
+      document.getElementById('beach-games').value = s.beachTennis.gamesPerSet;
+      document.getElementById('beach-noad').checked = s.beachTennis.noAd;
+      document.getElementById('beach-super-tiebreak').checked = s.beachTennis.superTiebreak;
+    }
+
     pickedColor1 = s.color1;
     pickedColor2 = s.color2;
     document.querySelector('.color-dot[data-player="1"]').style.background = pickedColor1;
@@ -131,36 +181,37 @@
 
   newForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    const player1 = document.getElementById('p1-name').value.trim() || 'Jogador 1';
-    const player2 = document.getElementById('p2-name').value.trim() || 'Jogador 2';
-    const startScore = document.getElementById('start-score').value;
-    const targetRaw = document.getElementById('target-score').value;
-    const increment = document.getElementById('increment').value;
-    const allowNegative = document.getElementById('allow-negative').checked;
+    const defaultName1 = selectedSport === 'volei' ? 'Time 1' : 'Dupla 1';
+    const defaultName2 = selectedSport === 'volei' ? 'Time 2' : 'Dupla 2';
+    const player1 = document.getElementById('p1-name').value.trim() || defaultName1;
+    const player2 = document.getElementById('p2-name').value.trim() || defaultName2;
+
+    let config;
+    if (selectedSport === 'volei') {
+      const format = Number(document.getElementById('volei-format').value);
+      config = {
+        setsToWin: format === 1 ? 1 : (format === 5 ? 3 : 2),
+        pointsPerSet: Math.max(5, Number(document.getElementById('volei-points').value) || 25),
+        pointsDecider: Math.max(5, Number(document.getElementById('volei-points-decider').value) || 15),
+      };
+    } else {
+      const format = Number(document.getElementById('beach-format').value);
+      config = {
+        setsToWin: format === 1 ? 1 : 2,
+        gamesPerSet: Math.max(2, Number(document.getElementById('beach-games').value) || 6),
+        noAd: document.getElementById('beach-noad').checked,
+        superTiebreak: document.getElementById('beach-super-tiebreak').checked,
+      };
+    }
 
     Scoreboard.createMatch({
+      sport: selectedSport,
       player1, player2,
       color1: pickedColor1, color2: pickedColor2,
-      startScore, target: targetRaw === '' ? null : targetRaw,
-      increment, allowNegative,
+      config,
     });
     startGameView();
   });
-
-  function startQuickMatch() {
-    const s = Settings.get();
-    Scoreboard.createMatch({
-      player1: 'Jogador 1',
-      player2: 'Jogador 2',
-      color1: s.color1,
-      color2: s.color2,
-      startScore: 0,
-      target: null,
-      increment: 1,
-      allowNegative: false,
-    });
-    startGameView();
-  }
 
   // ------------------------------------------------------------------
   // TELA DO PLACAR
@@ -169,25 +220,40 @@
   const p2ScoreEl = document.getElementById('p2-score');
   const p1NameEl = document.getElementById('p1-display-name');
   const p2NameEl = document.getElementById('p2-display-name');
+  const p1SubEl = document.getElementById('p1-sub');
+  const p2SubEl = document.getElementById('p2-sub');
   const gameMetaEl = document.getElementById('game-meta');
+  const setsP1El = document.getElementById('sets-p1');
+  const setsP2El = document.getElementById('sets-p2');
+  const scoreUndoEls = document.querySelectorAll('.score-undo');
 
   function startGameView() {
     renderGame();
     startTimer(true);
-    updateCrownBadge();
     showView('game');
   }
 
   function renderGame() {
     const m = Scoreboard.getMatch();
     if (!m) return;
+    const d = Scoreboard.describe(m);
+
     p1NameEl.textContent = m.player1;
     p2NameEl.textContent = m.player2;
-    p1ScoreEl.textContent = m.score1;
-    p2ScoreEl.textContent = m.score2;
+    p1ScoreEl.textContent = d.big1;
+    p2ScoreEl.textContent = d.big2;
+    p1SubEl.textContent = d.sub1;
+    p2SubEl.textContent = d.sub2;
+    setsP1El.textContent = d.setsWon[0];
+    setsP2El.textContent = d.setsWon[1];
+    gameMetaEl.textContent = d.meta;
+    scoreUndoEls.forEach((button) => {
+      const player = Number(button.dataset.player);
+      button.disabled = !m.events.some((event) => event.team === player);
+    });
+
     document.documentElement.style.setProperty('--p1', m.color1 || '#E24949');
     document.documentElement.style.setProperty('--p2', m.color2 || '#3E7CE0');
-    gameMetaEl.textContent = m.target ? `Meta: ${m.target} pontos` : '';
   }
 
   function bumpScore(player) {
@@ -196,6 +262,15 @@
     // força reflow para reiniciar a animação
     void el.offsetWidth;
     el.classList.add('bump');
+  }
+
+  function animateSetVictory(player) {
+    const panel = document.querySelector(`.player-panel[data-player="${player}"]`);
+    if (!panel) return;
+    panel.classList.remove('set-victory');
+    void panel.offsetWidth;
+    panel.classList.add('set-victory');
+    panel.addEventListener('animationend', () => panel.classList.remove('set-victory'), { once: true });
   }
 
   // ---------------- Cronômetro da partida ----------------
@@ -267,7 +342,6 @@
         m.player2 = value || m.player2;
       }
       renderGame();
-      updateCrownBadge();
       el.removeEventListener('blur', finish);
       el.removeEventListener('keydown', onKeydown);
     };
@@ -281,47 +355,26 @@
     el.addEventListener('keydown', onKeydown);
   }
 
-  // ---------------- Selo de confrontos diretos (coroa) ----------------
-  async function updateCrownBadge() {
-    const m = Scoreboard.getMatch();
-    const badge = document.getElementById('crown-badge');
-    if (!m) return;
-    const matches = await Storage.getAllMatches();
-    const name1 = m.player1.trim().toLowerCase();
-    const name2 = m.player2.trim().toLowerCase();
-    let w1 = 0, w2 = 0, found = false;
+  // ---------------- Ações do placar ----------------
+  async function handleAddPoint(player) {
+    const beforeSets = [...Scoreboard.getMatch().state.setsWon];
+    const result = Scoreboard.addPoint(player);
+    if (result === null) return; // partida já finalizada
 
-    matches.forEach((match) => {
-      if (!match.winner || match.winner === 'draw') return;
-      const names = [match.player1.trim().toLowerCase(), match.player2.trim().toLowerCase()];
-      if (names.includes(name1) && names.includes(name2)) {
-        found = true;
-        const winnerName = match.winner === 1 ? match.player1 : match.player2;
-        if (winnerName.trim().toLowerCase() === name1) w1 += 1;
-        else if (winnerName.trim().toLowerCase() === name2) w2 += 1;
-      }
-    });
-
-    document.getElementById('crown-p1').textContent = w1;
-    document.getElementById('crown-p2').textContent = w2;
-    badge.style.display = found ? 'flex' : 'none';
-  }
-
-  async function handleAddPoint(player, amount) {
-    const result = Scoreboard.addPoint(player, amount);
-    if (result === null) {
-      showToast('Não é possível deixar o placar negativo');
-      return;
-    }
     renderGame();
     bumpScore(player);
+    const afterSets = Scoreboard.getMatch().state.setsWon;
+    afterSets.forEach((sets, index) => {
+      if (sets > beforeSets[index]) animateSetVictory(index + 1);
+    });
     vibrate(20);
-    playBeep(amount > 0 ? 660 : 420, 80);
+    playBeep(660, 80);
 
     const s = Settings.get();
     const m = Scoreboard.getMatch();
+    const d = Scoreboard.describe(m);
     if (s.voiceEnabled) {
-      Voice.announceScore(m.player1, m.score1, m.player2, m.score2);
+      Voice.announceScore(m.player1, d.big1, m.player2, d.big2);
     }
 
     if (result.winner) {
@@ -334,19 +387,27 @@
   async function handleFinishManually() {
     const m = Scoreboard.getMatch();
     if (!m) return;
-    stopTimer();
-    Scoreboard.finishManually();
-    await Scoreboard.persist();
-    showVictory(m);
+    askConfirm('Finalizar a partida com o placar atual?', async () => {
+      stopTimer();
+      Scoreboard.finishManually();
+      await Scoreboard.persist();
+      showVictory(m);
+    });
   }
 
-  function handleUndo() {
-    const ok = Scoreboard.undo();
+  function handleUndoPlayer(player) {
+    const wasVictoryVisible = victoryModal.classList.contains('is-active');
+    const ok = Scoreboard.undoPoint(player);
     if (!ok) {
-      showToast('Nada para desfazer');
+      showToast('Nenhum ponto para anular deste lado');
       return;
     }
+    if (wasVictoryVisible) {
+      hideVictory();
+      startTimer(false);
+    }
     renderGame();
+    showToast('Ponto anulado');
   }
 
   function handleReset() {
@@ -433,9 +494,16 @@
     document.querySelectorAll('.theme-option').forEach((btn) => {
       btn.setAttribute('aria-pressed', String(btn.dataset.themeChoice === s.theme));
     });
-    document.getElementById('def-start').value = s.defaultStartScore;
-    document.getElementById('def-target').value = s.defaultTarget;
-    document.getElementById('def-increment').value = s.defaultIncrement;
+
+    document.getElementById('def-volei-format').value = String(s.volei.setsToWin === 1 ? 1 : (s.volei.setsToWin === 3 ? 5 : 3));
+    document.getElementById('def-volei-points').value = s.volei.pointsPerSet;
+    document.getElementById('def-volei-points-decider').value = s.volei.pointsDecider;
+
+    document.getElementById('def-beach-format').value = String(s.beachTennis.setsToWin === 2 ? 3 : 1);
+    document.getElementById('def-beach-games').value = s.beachTennis.gamesPerSet;
+    document.getElementById('def-beach-noad').checked = s.beachTennis.noAd;
+    document.getElementById('def-beach-super-tiebreak').checked = s.beachTennis.superTiebreak;
+
     document.getElementById('setting-voice').checked = s.voiceEnabled;
     document.getElementById('setting-sound').checked = s.soundEnabled;
     document.getElementById('setting-vibration').checked = s.vibrationEnabled;
@@ -451,11 +519,34 @@
     });
   });
 
-  ['def-start', 'def-target', 'def-increment'].forEach((id) => {
-    document.getElementById(id).addEventListener('change', async (e) => {
-      const map = { 'def-start': 'defaultStartScore', 'def-target': 'defaultTarget', 'def-increment': 'defaultIncrement' };
-      await Settings.update({ [map[id]]: Number(e.target.value) });
+  async function saveVoleiDefaults() {
+    const format = Number(document.getElementById('def-volei-format').value);
+    await Settings.update({
+      volei: {
+        setsToWin: format === 1 ? 1 : (format === 5 ? 3 : 2),
+        pointsPerSet: Math.max(5, Number(document.getElementById('def-volei-points').value) || 25),
+        pointsDecider: Math.max(5, Number(document.getElementById('def-volei-points-decider').value) || 15),
+      },
     });
+  }
+
+  async function saveBeachDefaults() {
+    const format = Number(document.getElementById('def-beach-format').value);
+    await Settings.update({
+      beachTennis: {
+        setsToWin: format === 1 ? 1 : 2,
+        gamesPerSet: Math.max(2, Number(document.getElementById('def-beach-games').value) || 6),
+        noAd: document.getElementById('def-beach-noad').checked,
+        superTiebreak: document.getElementById('def-beach-super-tiebreak').checked,
+      },
+    });
+  }
+
+  ['def-volei-format', 'def-volei-points', 'def-volei-points-decider'].forEach((id) => {
+    document.getElementById(id).addEventListener('change', saveVoleiDefaults);
+  });
+  ['def-beach-format', 'def-beach-games', 'def-beach-noad', 'def-beach-super-tiebreak'].forEach((id) => {
+    document.getElementById(id).addEventListener('change', saveBeachDefaults);
   });
 
   document.getElementById('setting-voice').addEventListener('change', (e) => Settings.update({ voiceEnabled: e.target.checked }));
@@ -496,8 +587,10 @@
     const action = btn.dataset.action;
 
     switch (action) {
-      case 'new-match': openNewMatchForm(); break;
-      case 'quick-match': startQuickMatch(); break;
+      case 'new-match': openSportPicker(); break;
+      case 'pick-sport':
+        openNewMatchForm(btn.dataset.sport);
+        break;
       case 'go-history': openHistory(); break;
       case 'go-settings': openSettingsView(); break;
       case 'back-home': showView('home'); break;
@@ -510,10 +603,8 @@
         colorInput.click();
         break;
 
-      case 'add':
-        handleAddPoint(Number(btn.dataset.player), Number(btn.dataset.amount));
-        break;
-      case 'undo': handleUndo(); break;
+      case 'add': handleAddPoint(Number(btn.dataset.player)); break;
+      case 'undo-player': handleUndoPlayer(Number(btn.dataset.player)); break;
       case 'reset-match': handleReset(); break;
       case 'finish-match': handleFinishManually(); break;
       case 'exit-game': handleExitGame(); break;
@@ -526,12 +617,14 @@
       case 'delete-match': handleDeleteMatch(); break;
       case 'clear-history': handleClearHistory(); break;
 
-      case 'victory-new':
+      case 'victory-new': {
+        const finishedSport = Scoreboard.getMatch() ? Scoreboard.getMatch().sport : 'volei';
         hideVictory();
         stopTimer();
         Scoreboard.clear();
-        openNewMatchForm();
+        openNewMatchForm(finishedSport);
         break;
+      }
       case 'victory-save':
         hideVictory();
         stopTimer();

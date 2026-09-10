@@ -420,6 +420,39 @@ a { color: var(--amber); }
   color: var(--amber);
 }
 
+.field-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: -4px 0 0;
+}
+
+.sport-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-l);
+  padding: var(--space-6) var(--space-4);
+}
+
+.sport-card:hover { border-color: var(--amber); }
+.sport-card:active { transform: scale(0.98); }
+
+.sport-icon { font-size: 2.6rem; line-height: 1; }
+
+.sport-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.sport-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
 /* ==========================================================================
    Placar (tela principal)
    ========================================================================== */
@@ -442,6 +475,8 @@ a { color: var(--amber); }
 .board {
   position: relative;
   flex: 1;
+  min-height: 0;
+  height: calc(100dvh - 136px);
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr;
@@ -461,6 +496,42 @@ a { color: var(--amber); }
 }
 
 .player-panel[data-player="2"] { background: var(--p2); }
+
+.player-panel.set-victory {
+  z-index: 2;
+  animation: set-victory 1.15s ease both;
+}
+
+.player-panel.set-victory::after {
+  content: "VITÓRIA NO SET";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  padding: 8px 12px;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  border-radius: 999px;
+  color: #fff;
+  font-size: clamp(0.65rem, 2vw, 0.9rem);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  transform: translate(-50%, -50%) scale(0.5) rotate(-5deg);
+  opacity: 0;
+  animation: set-victory-label 1.15s ease both;
+  pointer-events: none;
+}
+
+@keyframes set-victory {
+  0%, 100% { filter: brightness(1); }
+  25% { filter: brightness(1.45); }
+  55% { filter: brightness(1.08); }
+}
+
+@keyframes set-victory-label {
+  15% { opacity: 0; transform: translate(-50%, -50%) scale(0.5) rotate(-5deg); }
+  40%, 75% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.08); }
+}
 
 .edit-btn {
   position: absolute;
@@ -500,16 +571,41 @@ a { color: var(--amber); }
   white-space: normal;
 }
 
+.player-sub {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  padding: 3px 10px;
+  min-height: 1.4em;
+}
+
 .player-score {
   font-family: var(--font-score);
   font-variant-numeric: tabular-nums;
-  font-size: clamp(3.6rem, 17vw, 8rem);
+  font-size: clamp(5rem, 32vw, 16rem);
   line-height: 1;
   font-weight: 800;
   color: #fff;
 }
 
 .player-score.bump { animation: bump .28s ease; }
+
+.score-undo {
+  width: 32px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.48);
+  border-radius: var(--radius-s);
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.score-undo:hover:not(:disabled) { background: rgba(255, 255, 255, 0.25); }
+.score-undo:disabled { opacity: 0.25; cursor: not-allowed; }
 
 @keyframes bump {
   0% { transform: scale(1); }
@@ -519,36 +615,25 @@ a { color: var(--amber); }
 
 .score-controls {
   display: flex;
-  flex-wrap: wrap;
   justify-content: center;
-  gap: 6px;
   width: 100%;
   max-width: 220px;
 }
 
-.score-btn {
-  flex: 1 1 auto;
-  min-width: 44px;
-  background: rgba(255, 255, 255, 0.92);
+.point-btn {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.95);
   border: none;
   border-radius: 999px;
-  padding: 12px 6px;
-  font-size: 1rem;
-  font-weight: 700;
+  padding: 16px 10px;
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+  font-weight: 800;
   color: #14181F;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
 }
 
-.score-btn:active { transform: scale(0.94); }
-.score-btn.minus {
-  flex-basis: 100%;
-  background: rgba(255, 255, 255, 0.22);
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #fff;
-  padding: 8px;
-  box-shadow: none;
-}
+.point-btn:active { transform: scale(0.95); }
 
 /* Selo central flutuante */
 
@@ -638,9 +723,15 @@ a { color: var(--amber); }
   background: var(--bg);
 }
 
+@media (max-height: 620px) {
+  .board { height: calc(100dvh - 120px); }
+  .player-panel { padding-top: var(--space-5); padding-bottom: var(--space-3); }
+  .player-score { font-size: clamp(4rem, 28vw, 12rem); }
+}
+
 @media (min-width: 480px) {
-  .score-controls { max-width: 260px; }
-  .score-btn { font-size: 1.1rem; padding: 14px 8px; }
+  .score-controls { max-width: 280px; }
+  .point-btn { font-size: 1.15rem; padding: 18px 10px; }
 }
 
 /* ==========================================================================
@@ -753,6 +844,7 @@ a { color: var(--amber); }
 .match-card .score-line .p1 { color: var(--p1); }
 .match-card .score-line .p2 { color: var(--p2); }
 .match-card .vs { color: var(--text-muted); font-size: 0.9rem; }
+.match-card .sport-tag { margin-left: auto; font-size: 1rem; }
 
 .match-card .winner-line {
   font-size: 0.85rem;

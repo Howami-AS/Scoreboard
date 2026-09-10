@@ -1,7 +1,7 @@
 {
   "name": "Scoreboard",
   "short_name": "Scoreboard",
-  "description": "Marcador de pontuação universal para partidas entre 2 jogadores ou equipes.",
+  "description": "Marcador de pontuação para Vôlei e Beach Tennis, com as regras oficiais de cada esporte.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
