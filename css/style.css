@@ -591,7 +591,7 @@ a { color: var(--amber); }
 .player-score {
   font-family: var(--font-score);
   font-variant-numeric: tabular-nums;
-  font-size: clamp(5rem, 32vw, 16rem);
+  font-size: clamp(6rem, 38vw, 22rem);
   line-height: 1;
   font-weight: 800;
   color: #fff;
@@ -766,7 +766,7 @@ a { color: var(--amber); }
     padding-bottom: var(--space-3);
   }
 
-  .player-score { font-size: clamp(4rem, 24vh, 9rem); }
+  .player-score { font-size: clamp(6rem, 42vh, 20rem); }
   .point-btn { padding-top: 10px; padding-bottom: 10px; }
   .game-actions { gap: 4px; padding-top: 4px; }
   .game-control-btn { width: 28px; height: 28px; font-size: 0.9rem; }
@@ -774,7 +774,7 @@ a { color: var(--amber); }
 
 @media (orientation: portrait) and (max-height: 620px) {
   .player-panel { padding-top: var(--space-5); padding-bottom: var(--space-3); }
-  .player-score { font-size: clamp(4rem, 28vw, 12rem); }
+  .player-score { font-size: clamp(5rem, 38vw, 18rem); }
 }
 
 @media (min-width: 480px) {
