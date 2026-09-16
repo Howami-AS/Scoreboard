@@ -69,6 +69,10 @@ body {
   overscroll-behavior-y: contain;
 }
 
+body:has(.game-view.is-active) {
+  overflow: hidden;
+}
+
 h1, h2, h3, p { margin: 0; }
 
 button {
@@ -582,7 +586,8 @@ a { color: var(--amber); }
   font-family: var(--font-score);
   font-size: clamp(1.3rem, 5vh, 3rem);
   line-height: 1;
-  font-weight: 600;
+  font-weight: 900;
+  -webkit-text-stroke: 0.5px currentColor;
   color: rgba(255, 255, 255, 0.78);
   background: rgba(255, 255, 255, 0.16);
   border-radius: 999px;
@@ -595,8 +600,10 @@ a { color: var(--amber); }
   font-variant-numeric: tabular-nums;
   font-size: min(42vw, 58vh, 30rem);
   line-height: 1;
-  font-weight: 800;
+  font-weight: 900;
   color: #fff;
+  -webkit-text-stroke: 1.5px currentColor;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.16);
 }
 
 .player-score.winner-name {
