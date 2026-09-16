@@ -485,7 +485,7 @@ a { color: var(--amber); }
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--space-3);
+  gap: clamp(4px, 1.2vh, var(--space-3));
   padding: calc(var(--space-6) + var(--space-3)) var(--space-2) var(--space-5);
   position: relative;
   overflow: hidden;
@@ -579,19 +579,21 @@ a { color: var(--amber); }
 }
 
 .player-sub {
-  font-size: 0.78rem;
+  font-family: var(--font-score);
+  font-size: clamp(1.3rem, 5vh, 3rem);
+  line-height: 1;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.78);
   background: rgba(255, 255, 255, 0.16);
   border-radius: 999px;
-  padding: 3px 10px;
-  min-height: 1.4em;
+  padding: clamp(5px, 1vh, 10px) clamp(12px, 2vw, 24px);
+  min-height: 1.2em;
 }
 
 .player-score {
   font-family: var(--font-score);
   font-variant-numeric: tabular-nums;
-  font-size: clamp(6rem, 38vw, 22rem);
+  font-size: min(42vw, 58vh, 30rem);
   line-height: 1;
   font-weight: 800;
   color: #fff;
@@ -766,7 +768,7 @@ a { color: var(--amber); }
     padding-bottom: var(--space-3);
   }
 
-  .player-score { font-size: clamp(6rem, 42vh, 20rem); }
+  .player-score { font-size: min(48vw, 62vh, 30rem); }
   .point-btn { padding-top: 10px; padding-bottom: 10px; }
   .game-actions { gap: 4px; padding-top: 4px; }
   .game-control-btn { width: 28px; height: 28px; font-size: 0.9rem; }
@@ -774,7 +776,7 @@ a { color: var(--amber); }
 
 @media (orientation: portrait) and (max-height: 620px) {
   .player-panel { padding-top: var(--space-5); padding-bottom: var(--space-3); }
-  .player-score { font-size: clamp(5rem, 38vw, 18rem); }
+  .player-score { font-size: min(48vw, 45vh, 22rem); }
 }
 
 @media (min-width: 480px) {
