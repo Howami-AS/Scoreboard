@@ -30,12 +30,15 @@
     } catch (err) {
       // Tela cheia pode ser bloqueada pelo navegador ou indisponível no dispositivo.
     }
+    if (!screen.orientation || !screen.orientation.lock) return;
     try {
-      if (screen.orientation && screen.orientation.lock) {
-        await screen.orientation.lock('portrait');
-      }
+      await screen.orientation.lock('portrait-primary');
     } catch (err) {
-      // O bloqueio pode não estar disponível fora de uma PWA instalada.
+      try {
+        await screen.orientation.lock('portrait');
+      } catch (lockError) {
+        // O bloqueio pode não estar disponível neste navegador ou contexto.
+      }
     }
   }
 
@@ -841,10 +844,53 @@
   // Service Worker
   // ------------------------------------------------------------------
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('service-worker.js').catch(() => {
-        /* funcionamento offline pode não estar disponível; app segue normalmente */
+    const updateModal = document.getElementById('modal-update');
+    const updateNowButton = document.getElementById('update-now');
+    const updateLaterButton = document.getElementById('update-later');
+    let waitingWorker = null;
+    let reloadingForUpdate = false;
+
+    function showUpdatePrompt(worker) {
+      waitingWorker = worker;
+      updateModal.classList.add('is-active');
+    }
+
+    function watchForUpdate(registration) {
+      if (registration.waiting && navigator.serviceWorker.controller) {
+        showUpdatePrompt(registration.waiting);
+      }
+
+      registration.addEventListener('updatefound', () => {
+        const installingWorker = registration.installing;
+        if (!installingWorker) return;
+        installingWorker.addEventListener('statechange', () => {
+          if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            showUpdatePrompt(registration.waiting || installingWorker);
+          }
+        });
       });
+    }
+
+    updateNowButton.addEventListener('click', () => {
+      if (!waitingWorker) return;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (reloadingForUpdate) return;
+        reloadingForUpdate = true;
+        window.location.reload();
+      }, { once: true });
+      waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+    });
+
+    updateLaterButton.addEventListener('click', () => {
+      updateModal.classList.remove('is-active');
+    });
+
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(watchForUpdate)
+        .catch(() => {
+          /* funcionamento offline pode não estar disponível; app segue normalmente */
+        });
     });
   }
 

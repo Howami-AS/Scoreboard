@@ -5,7 +5,7 @@
    segundo plano (stale-while-revalidate) quando há rede disponível.
    ========================================================================== */
 
-const CACHE_VERSION = 'scoreboard-v2';
+const CACHE_VERSION = 'scoreboard-v4';
 const PRECACHE_URLS = [
   './',
   './index.html',
@@ -32,8 +32,13 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_VERSION)
       .then((cache) => cache.addAll(PRECACHE_URLS))
-      .then(() => self.skipWaiting())
   );
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener('activate', (event) => {
