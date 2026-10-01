@@ -21,15 +21,6 @@
   }
 
   async function enterGameDisplay() {
-    try {
-      if (!document.fullscreenElement) {
-        const requestFullscreen = document.documentElement.requestFullscreen
-          || document.documentElement.webkitRequestFullscreen;
-        if (requestFullscreen) await requestFullscreen.call(document.documentElement);
-      }
-    } catch (err) {
-      // Tela cheia pode ser bloqueada pelo navegador ou indisponível no dispositivo.
-    }
     if (!screen.orientation || !screen.orientation.lock) return;
     try {
       await screen.orientation.lock('landscape-primary');
@@ -45,9 +36,6 @@
   function leaveGameDisplay() {
     if (screen.orientation && screen.orientation.unlock) {
       screen.orientation.unlock();
-    }
-    if (document.fullscreenElement && document.exitFullscreen) {
-      document.exitFullscreen().catch(() => {});
     }
   }
 
