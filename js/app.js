@@ -32,10 +32,10 @@
     }
     if (!screen.orientation || !screen.orientation.lock) return;
     try {
-      await screen.orientation.lock('portrait-primary');
+      await screen.orientation.lock('landscape-primary');
     } catch (err) {
       try {
-        await screen.orientation.lock('portrait');
+        await screen.orientation.lock('landscape');
       } catch (lockError) {
         // O bloqueio pode não estar disponível neste navegador ou contexto.
       }
