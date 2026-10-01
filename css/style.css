@@ -947,6 +947,52 @@ a { color: var(--amber); }
   .point-btn { padding: 6px 4px; font-size: 0.8rem; }
 }
 
+@media (orientation: landscape) and (max-height: 440px) and (min-width: 620px) {
+  .center-overlay {
+    top: var(--safe-top);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "crown" "timer" "actions";
+    gap: 6px;
+  }
+
+  .timer-pill { grid-area: timer; gap: 2px; padding: 0 4px; }
+  .crown-badge { grid-area: crown; gap: 6px; padding: 0 10px; font-size: 1.25rem; }
+  #sets-badge > span:first-child { font-size: 1.8rem; line-height: 1; }
+  .crown-score { font-size: 1.1rem; }
+  .meta-caption { display: none; }
+
+  .game-actions {
+    display: grid;
+    grid-area: actions;
+    grid-template-columns: repeat(2, 44px);
+    grid-template-areas: "voice finish" "exit reset";
+    gap: 6px;
+    width: max-content;
+    padding: 0;
+  }
+
+  .game-actions [data-action="toggle-voice"] { grid-area: voice; }
+  .game-actions [data-action="finish-match"] { grid-area: finish; }
+  .game-actions [data-action="exit-game"] { grid-area: exit; }
+  .game-actions [data-action="reset-match"] { grid-area: reset; }
+
+  .player-panel {
+    gap: 0;
+    padding: calc(var(--safe-top) + 60px) 4px calc(var(--safe-bottom) + 6px);
+  }
+
+  .player-name,
+  .player-sub,
+  .score-undo,
+  .score-controls { flex-shrink: 0; }
+
+  .winner-label:not(.is-visible) { display: none; }
+  .player-name { font-size: 0.8rem; }
+  .player-sub { font-size: 0.8rem; padding: 2px 8px; }
+  .player-score { font-size: min(48vw, 62vh, calc(100dvh - var(--safe-top) - var(--safe-bottom) - 161px), 30rem); }
+}
+
 /* ==========================================================================
    Modal (vitória / confirmação)
    ========================================================================== */
