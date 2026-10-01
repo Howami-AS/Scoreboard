@@ -679,48 +679,11 @@ a { color: var(--amber); }
 
 .player-score.bump { animation: bump .28s ease; }
 
-.score-undo {
-  width: 32px;
-  height: 24px;
-  padding: 0;
-  border: 1px solid rgba(255, 255, 255, 0.48);
-  border-radius: var(--radius-s);
-  background: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.86);
-  font-size: 1.25rem;
-  line-height: 1;
-}
-
-.score-undo:hover:not(:disabled) { background: rgba(255, 255, 255, 0.25); }
-.score-undo:disabled { opacity: 0.25; cursor: not-allowed; }
-
 @keyframes bump {
   0% { transform: scale(1); }
   35% { transform: scale(1.12); }
   100% { transform: scale(1); }
 }
-
-.score-controls {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-  max-width: 220px;
-}
-
-.point-btn {
-  width: 100%;
-  background: rgba(255, 255, 255, 0.95);
-  border: none;
-  border-radius: 999px;
-  padding: 16px 10px;
-  font-size: 1.05rem;
-  letter-spacing: 0.04em;
-  font-weight: 800;
-  color: #14181F;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-}
-
-.point-btn:active { transform: scale(0.95); }
 
 /* Selo central flutuante */
 
@@ -840,7 +803,6 @@ a { color: var(--amber); }
   }
 
   .player-score { font-size: min(48vw, 62vh, 30rem); }
-  .point-btn { padding-top: 10px; padding-bottom: 10px; }
   .game-actions { gap: 6px; padding-top: 4px; }
 }
 
@@ -852,13 +814,6 @@ a { color: var(--amber); }
 
   .player-sub { font-size: min(1.3rem, 4vh); padding: 5px 12px; }
   .player-score { font-size: min(38vw, 24vh, 12rem); }
-  .score-undo { height: 22px; }
-  .point-btn { padding: 10px 8px; font-size: 0.9rem; }
-}
-
-@media (min-width: 480px) {
-  .score-controls { max-width: 280px; }
-  .point-btn { font-size: 1.15rem; padding: 18px 10px; }
 }
 
 @media (max-height: 440px) {
@@ -935,20 +890,20 @@ a { color: var(--amber); }
 
 @media (orientation: landscape) and (max-height: 440px) {
   .player-panel {
-    gap: 2px;
-    padding: 168px 4px calc(var(--safe-bottom) + 6px);
+    gap: 0;
+    padding: calc(var(--safe-top) + 6px) 4px calc(var(--safe-bottom) + 6px);
   }
 
   .winner-label { min-height: 1em; font-size: 0.65rem; }
   .player-name { font-size: 0.8rem; }
-  .player-sub { font-size: 1rem; padding: 4px 10px; }
-  .player-score { font-size: min(24vw, 17vh, 5rem); }
-  .score-undo { height: 22px; }
-  .point-btn { padding: 6px 4px; font-size: 0.8rem; }
+  .player-sub { font-size: 0.8rem; padding: 2px 8px; }
+  .player-score { font-size: min(48vw, 70vh, calc(100dvh - var(--safe-top) - var(--safe-bottom) - 60px), 30rem); }
 }
 
 @media (orientation: landscape) and (max-height: 440px) and (min-width: 620px) {
   .center-overlay {
+    width: max-content;
+    max-width: 96vw;
     top: var(--safe-top);
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -979,18 +934,16 @@ a { color: var(--amber); }
 
   .player-panel {
     gap: 0;
-    padding: calc(var(--safe-top) + 60px) 4px calc(var(--safe-bottom) + 6px);
+    padding: calc(var(--safe-top) + 6px) 4px calc(var(--safe-bottom) + 6px);
   }
 
   .player-name,
-  .player-sub,
-  .score-undo,
-  .score-controls { flex-shrink: 0; }
+  .player-sub { flex-shrink: 0; }
 
   .winner-label:not(.is-visible) { display: none; }
   .player-name { font-size: 0.8rem; }
   .player-sub { font-size: 0.8rem; padding: 2px 8px; }
-  .player-score { font-size: min(48vw, 62vh, calc(100dvh - var(--safe-top) - var(--safe-bottom) - 161px), 30rem); }
+  .player-score { font-size: min(48vw, 70vh, calc(100dvh - var(--safe-top) - var(--safe-bottom) - 60px), 30rem); }
 }
 
 /* ==========================================================================

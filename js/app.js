@@ -262,7 +262,6 @@
   const gameMetaEl = document.getElementById('game-meta');
   const setsP1El = document.getElementById('sets-p1');
   const setsP2El = document.getElementById('sets-p2');
-  const scoreUndoEls = document.querySelectorAll('.score-undo');
 
   function startGameView() {
     renderGame();
@@ -293,10 +292,6 @@
     setsP1El.textContent = d.setsWon[0];
     setsP2El.textContent = d.setsWon[1];
     gameMetaEl.textContent = d.meta;
-    scoreUndoEls.forEach((button) => {
-      const player = Number(button.dataset.player);
-      button.disabled = !m.events.some((event) => event.team === player);
-    });
 
     document.documentElement.style.setProperty('--p1', m.color1 || '#E24949');
     document.documentElement.style.setProperty('--p2', m.color2 || '#3E7CE0');
