@@ -844,7 +844,7 @@
     }
 
     function watchForUpdate(registration) {
-      if (registration.waiting && navigator.serviceWorker.controller) {
+      if (registration.waiting) {
         showUpdatePrompt(registration.waiting);
       }
 
@@ -852,11 +852,18 @@
         const installingWorker = registration.installing;
         if (!installingWorker) return;
         installingWorker.addEventListener('statechange', () => {
-          if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          if (installingWorker.state === 'installed' && registration.active) {
             showUpdatePrompt(registration.waiting || installingWorker);
           }
         });
       });
+
+      const checkForUpdate = () => {
+        if (document.visibilityState !== 'visible') return;
+        registration.update().catch(() => {});
+      };
+      checkForUpdate();
+      document.addEventListener('visibilitychange', checkForUpdate);
     }
 
     updateNowButton.addEventListener('click', () => {
