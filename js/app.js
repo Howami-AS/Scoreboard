@@ -32,7 +32,7 @@
     }
     try {
       if (screen.orientation && screen.orientation.lock) {
-        await screen.orientation.lock('landscape');
+        await screen.orientation.lock('portrait');
       }
     } catch (err) {
       // O bloqueio pode não estar disponível fora de uma PWA instalada.
@@ -157,6 +157,21 @@
   let pickedColor2 = null;
   let selectedSport = 'volei';
 
+  function selectMatchTab(name) {
+    document.querySelectorAll('[data-match-tab]').forEach((button) => {
+      const selected = button.dataset.matchTab === name;
+      button.classList.toggle('is-active', selected);
+      button.setAttribute('aria-selected', String(selected));
+    });
+    document.querySelectorAll('[data-match-panel]').forEach((panel) => {
+      panel.classList.toggle('hidden', panel.dataset.matchPanel !== name);
+    });
+  }
+
+  document.querySelectorAll('[data-match-tab]').forEach((button) => {
+    button.addEventListener('click', () => selectMatchTab(button.dataset.matchTab));
+  });
+
   function buildVoleiConfigFromSettings(s) {
     return {
       setsToWin: s.volei.setsToWin,
@@ -204,6 +219,7 @@
     pickedColor2 = s.color2;
     document.querySelector('.color-dot[data-player="1"]').style.background = pickedColor1;
     document.querySelector('.color-dot[data-player="2"]').style.background = pickedColor2;
+    selectMatchTab('players');
     showView('new');
   }
 
@@ -450,6 +466,27 @@
     showToast('Ponto anulado');
   }
 
+  const playerPanels = document.querySelectorAll('.player-panel');
+  const swipeStarts = new Map();
+  playerPanels.forEach((panel) => {
+    panel.addEventListener('pointerdown', (event) => {
+      if (event.pointerType !== 'touch' || event.target.closest('button, [contenteditable="true"], .center-overlay')) return;
+      swipeStarts.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    });
+    panel.addEventListener('pointerup', (event) => {
+      const start = swipeStarts.get(event.pointerId);
+      swipeStarts.delete(event.pointerId);
+      if (!start || !panel.closest('.game-view').classList.contains('is-active')) return;
+      const deltaX = event.clientX - start.x;
+      const deltaY = event.clientY - start.y;
+      if (Math.abs(deltaY) < 50 || Math.abs(deltaY) <= Math.abs(deltaX) * 1.3) return;
+      const player = Number(panel.dataset.player);
+      if (deltaY < 0) handleAddPoint(player);
+      else handleUndoPlayer(player);
+    });
+    panel.addEventListener('pointercancel', (event) => swipeStarts.delete(event.pointerId));
+  });
+
   function handleReset() {
     askConfirm('Reiniciar a pontuação desta partida?', () => {
       Scoreboard.reset();
@@ -481,22 +518,43 @@
   // ------------------------------------------------------------------
   const matchListEl = document.getElementById('match-list');
   const historyEmptyEl = document.getElementById('history-empty');
+  const historyPaginationEl = document.getElementById('history-pagination');
+  const historyPageInfoEl = document.getElementById('history-page-info');
   const filterPlayerEl = document.getElementById('filter-player');
   const filterPeriodEl = document.getElementById('filter-period');
   let allMatches = [];
+  let historyPage = 0;
+
+  function getHistoryPageSize() {
+    return window.innerHeight <= 440 ? 1 : 2;
+  }
 
   async function openHistory() {
     allMatches = await Storage.getAllMatches();
+    historyPage = 0;
     refreshHistoryList();
     showView('history');
   }
 
   function refreshHistoryList() {
+    const pageSize = getHistoryPageSize();
     const filtered = History.filterMatches(allMatches, {
       playerQuery: filterPlayerEl.value,
       period: filterPeriodEl.value,
     });
-    History.renderList(matchListEl, historyEmptyEl, filtered);
+    const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+    historyPage = Math.min(historyPage, pageCount - 1);
+    const start = historyPage * pageSize;
+    History.renderList(matchListEl, historyEmptyEl, filtered.slice(start, start + pageSize));
+    historyPaginationEl.classList.toggle('hidden', filtered.length <= pageSize);
+    historyPageInfoEl.textContent = `${historyPage + 1} / ${pageCount}`;
+    historyPaginationEl.querySelector('[data-action="history-prev"]').disabled = historyPage === 0;
+    historyPaginationEl.querySelector('[data-action="history-next"]').disabled = historyPage >= pageCount - 1;
+  }
+
+  function changeHistoryPage(delta) {
+    historyPage = Math.max(0, historyPage + delta);
+    refreshHistoryList();
   }
 
   filterPlayerEl.addEventListener('input', refreshHistoryList);
@@ -506,9 +564,30 @@
     const m = await Storage.getMatch(id);
     if (!m) return;
     currentDetailId = id;
-    History.renderDetail(document.getElementById('detail-content'), m);
+    currentDetailMatch = m;
+    currentDetailPage = 0;
+    currentDetailTab = 'sets';
+    renderCurrentDetail();
     showView('detail');
   }
+
+  let currentDetailMatch = null;
+  let currentDetailPage = 0;
+  let currentDetailTab = 'sets';
+
+  function renderCurrentDetail() {
+    if (!currentDetailMatch) return;
+    History.renderDetail(document.getElementById('detail-content'), currentDetailMatch, currentDetailPage, currentDetailTab);
+  }
+
+  window.addEventListener('resize', () => {
+    if (document.getElementById('view-history').classList.contains('is-active')) refreshHistoryList();
+    if (document.getElementById('view-detail').classList.contains('is-active') && currentDetailMatch) {
+      const pageCount = Math.max(1, Math.ceil((currentDetailMatch.events || []).length / History.detailPageSize()));
+      currentDetailPage = Math.min(currentDetailPage, pageCount - 1);
+      renderCurrentDetail();
+    }
+  });
 
   function handleDeleteMatch() {
     if (currentDetailId === null) return;
@@ -531,6 +610,19 @@
   // ------------------------------------------------------------------
   // CONFIGURAÇÕES
   // ------------------------------------------------------------------
+  document.querySelectorAll('[data-settings-tab]').forEach((button) => {
+    button.addEventListener('click', () => {
+      document.querySelectorAll('[data-settings-tab]').forEach((tab) => {
+        const selected = tab === button;
+        tab.classList.toggle('is-active', selected);
+        tab.setAttribute('aria-selected', String(selected));
+      });
+      document.querySelectorAll('[data-settings-panel]').forEach((panel) => {
+        panel.classList.toggle('hidden', panel.dataset.settingsPanel !== button.dataset.settingsTab);
+      });
+    });
+  });
+
   function openSettingsView() {
     const s = Settings.get();
     document.querySelectorAll('.theme-option').forEach((btn) => {
@@ -656,6 +748,23 @@
       case 'reset-timer': resetTimer(); break;
 
       case 'open-match': openMatchDetail(Number(btn.dataset.id)); break;
+      case 'history-prev': changeHistoryPage(-1); break;
+      case 'history-next': changeHistoryPage(1); break;
+      case 'detail-prev':
+        currentDetailPage = Math.max(0, currentDetailPage - 1);
+        renderCurrentDetail();
+        break;
+      case 'detail-next':
+        currentDetailPage = Math.min(
+          Math.max(0, Math.ceil((currentDetailMatch?.events?.length || 0) / History.detailPageSize()) - 1),
+          currentDetailPage + 1,
+        );
+        renderCurrentDetail();
+        break;
+      case 'detail-tab':
+        currentDetailTab = btn.dataset.tab;
+        renderCurrentDetail();
+        break;
       case 'delete-match': handleDeleteMatch(); break;
       case 'clear-history': handleClearHistory(); break;
 

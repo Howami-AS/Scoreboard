@@ -63,8 +63,13 @@
       <button class="icon-btn" data-action="back-home" aria-label="Voltar">←</button>
       <h2 id="new-match-title">Nova partida</h2>
     </div>
-    <form class="screen" id="new-match-form">
+    <form class="screen match-form-screen" id="new-match-form">
+      <div class="section-tabs match-tabs" role="tablist" aria-label="Etapas da partida">
+        <button type="button" class="section-tab is-active" data-match-tab="players" aria-selected="true">Jogadores</button>
+        <button type="button" class="section-tab" data-match-tab="rules" aria-selected="false">Regras</button>
+      </div>
 
+      <div class="match-panel" data-match-panel="players">
       <div class="form-section">
         <h3>Jogadores</h3>
         <div class="player-field">
@@ -83,8 +88,10 @@
         </div>
         <input type="color" id="color-input" class="hidden" aria-hidden="true">
       </div>
+      </div>
 
       <!-- Regras específicas — Vôlei -->
+      <div class="match-panel hidden" data-match-panel="rules">
       <div class="form-section" id="volei-fields">
         <h3>Regras · Vôlei</h3>
         <div class="field">
@@ -143,6 +150,7 @@
             <span class="track"></span><span class="thumb"></span>
           </label>
         </div>
+      </div>
       </div>
 
       <button type="submit" class="btn btn-primary btn-block">INICIAR PARTIDA</button>
@@ -214,6 +222,11 @@
         </select>
       </div>
       <ul class="match-list" id="match-list"></ul>
+      <nav class="page-controls hidden" id="history-pagination" aria-label="Páginas do histórico">
+        <button class="icon-btn" type="button" data-action="history-prev" aria-label="Página anterior">←</button>
+        <span id="history-page-info"></span>
+        <button class="icon-btn" type="button" data-action="history-next" aria-label="Próxima página">→</button>
+      </nav>
       <div class="empty-state hidden" id="history-empty">
         <p>Nenhuma partida no histórico ainda.</p>
         <button class="btn btn-primary" data-action="new-match">Iniciar primeira partida</button>
@@ -228,7 +241,7 @@
       <h2>Detalhes</h2>
       <button class="icon-btn" data-action="delete-match" aria-label="Excluir partida">🗑</button>
     </div>
-    <div class="screen" id="detail-content"></div>
+    <div class="screen detail-screen" id="detail-content"></div>
   </section>
 
   <!-- ===================== CONFIGURAÇÕES ===================== -->
@@ -237,9 +250,16 @@
       <button class="icon-btn" data-action="back-home" aria-label="Voltar">←</button>
       <h2>Configurações</h2>
     </div>
-    <div class="screen">
+    <div class="screen settings-screen">
+      <div class="section-tabs settings-tabs" role="tablist" aria-label="Seções de configurações">
+        <button type="button" class="section-tab is-active" data-settings-tab="appearance" aria-selected="true">Visual</button>
+        <button type="button" class="section-tab" data-settings-tab="volei" aria-selected="false">Vôlei</button>
+        <button type="button" class="section-tab" data-settings-tab="beach" aria-selected="false">Beach</button>
+        <button type="button" class="section-tab" data-settings-tab="feedback" aria-selected="false">Feedback</button>
+        <button type="button" class="section-tab" data-settings-tab="data" aria-selected="false">Dados</button>
+      </div>
 
-      <div class="form-section">
+      <div class="form-section" data-settings-panel="appearance">
         <h3>Aparência</h3>
         <div class="theme-picker" role="group" aria-label="Tema">
           <button type="button" class="theme-option" data-theme-choice="dark" aria-pressed="true">Escuro</button>
@@ -247,7 +267,7 @@
         </div>
       </div>
 
-      <div class="form-section">
+      <div class="form-section hidden" data-settings-panel="volei">
         <h3>Padrões · Vôlei</h3>
         <div class="field">
           <label for="def-volei-format">Formato padrão</label>
@@ -269,7 +289,7 @@
         </div>
       </div>
 
-      <div class="form-section">
+      <div class="form-section hidden" data-settings-panel="beach">
         <h3>Padrões · Beach Tennis</h3>
         <div class="field">
           <label for="def-beach-format">Formato padrão</label>
@@ -299,7 +319,7 @@
         </div>
       </div>
 
-      <div class="form-section">
+      <div class="form-section hidden" data-settings-panel="feedback">
         <h3>Feedback</h3>
         <div class="toggle-row">
           <span>
@@ -327,14 +347,14 @@
         </div>
       </div>
 
-      <div class="form-section">
+      <div class="form-section hidden" data-settings-panel="data">
         <h3>Dados</h3>
         <button class="btn btn-secondary btn-block" data-action="export-data">Exportar dados</button>
         <button class="btn btn-secondary btn-block" data-action="import-data">Importar dados</button>
         <input type="file" id="import-file" accept="application/json" class="hidden">
       </div>
 
-      <div class="form-section">
+      <div class="form-section hidden" data-settings-panel="data">
         <h3>Sobre</h3>
         <p style="color:var(--text-muted); font-size:0.85rem;">Scoreboard não usa login, não coleta dados e não envia nada para servidores. Tudo fica salvo apenas neste dispositivo.</p>
       </div>

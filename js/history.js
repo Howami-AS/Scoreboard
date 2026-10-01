@@ -82,26 +82,23 @@ const History = (() => {
     });
   }
 
-  function renderDetail(container, m) {
+  function renderDetail(container, m, page = 0, activeTab = 'sets') {
     const setsWon = (m.state && m.state.setsWon) || [0, 0];
     const hist = (m.state && m.state.setHistory) || [];
+    const events = m.events || [];
+    const pageSize = detailPageSize();
+    const pageCount = Math.max(1, Math.ceil(events.length / pageSize));
+    const currentPage = Math.max(0, Math.min(page, pageCount - 1));
 
     const setsHtml = hist.length
       ? hist.map((s, i) => `<div class="event-row"><span>Set ${i + 1}</span><span class="delta">${s.p1} - ${s.p2}</span></div>`).join('')
       : '<div class="event-row"><span>Nenhum set concluído.</span></div>';
 
-    let lastSet = null;
-    const pointEventsHtml = m.events.length
-      ? m.events.map((ev) => {
-        const name = ev.player === 1 || ev.team === 1 ? m.player1 : m.player2;
+    const pointEventsHtml = events.length
+      ? events.slice(currentPage * pageSize, (currentPage + 1) * pageSize).map((ev) => {
         const team = ev.player || ev.team;
-        const setNum = ev.setNumber || 1;
-        let divider = '';
-        if (setNum !== lastSet) {
-          divider = `<div class="event-row" style="opacity:.6"><span>Set ${setNum}</span><span></span></div>`;
-          lastSet = setNum;
-        }
-        return `${divider}<div class="event-row"><span>${escapeHtml(name)}</span><span class="delta positive">ponto (${team === 1 ? m.player1 : m.player2})</span></div>`;
+        const name = team === 1 ? m.player1 : m.player2;
+        return `<div class="event-row"><span>Set ${ev.setNumber || 1} · ${escapeHtml(name)}</span><span class="delta positive">ponto</span></div>`;
       }).join('')
       : '<div class="event-row"><span>Nenhum evento registrado.</span></div>';
 
@@ -115,15 +112,28 @@ const History = (() => {
         <div class="winner-line">${m.winner ? '🏆 Vencedor: ' + escapeHtml(winnerName(m)) : 'Partida em andamento'}</div>
         <div class="date-line">${sportIcon(m.sport)} ${sportLabel(m.sport)} · ${formatDateTime(m.createdAt)}</div>
       </div>
-      <div class="form-section">
-        <h3>Sets</h3>
+      <div class="section-tabs detail-tabs" role="tablist" aria-label="Detalhes da partida">
+        <button type="button" class="section-tab${activeTab === 'sets' ? ' is-active' : ''}" data-action="detail-tab" data-tab="sets" aria-selected="${activeTab === 'sets'}">Sets</button>
+        <button type="button" class="section-tab${activeTab === 'points' ? ' is-active' : ''}" data-action="detail-tab" data-tab="points" aria-selected="${activeTab === 'points'}">Pontos</button>
+      </div>
+      <div class="detail-panel${activeTab === 'sets' ? '' : ' hidden'}" data-detail-panel="sets">
         <div class="event-log">${setsHtml}</div>
       </div>
-      <div class="form-section">
-        <h3>Histórico de pontos</h3>
+      <div class="detail-panel${activeTab === 'points' ? '' : ' hidden'}" data-detail-panel="points">
         <div class="event-log">${pointEventsHtml}</div>
+        <nav class="page-controls${events.length > pageSize ? '' : ' hidden'}" aria-label="Páginas dos pontos">
+          <button class="icon-btn" type="button" data-action="detail-prev" aria-label="Pontos anteriores" ${currentPage === 0 ? 'disabled' : ''}>←</button>
+          <span>${currentPage + 1} / ${pageCount}</span>
+          <button class="icon-btn" type="button" data-action="detail-next" aria-label="Próximos pontos" ${currentPage >= pageCount - 1 ? 'disabled' : ''}>→</button>
+        </nav>
       </div>
     `;
+  }
+
+  function detailPageSize() {
+    if (window.innerHeight <= 440) return 2;
+    if (window.innerHeight <= 520) return 3;
+    return 5;
   }
 
   function escapeHtml(str) {
@@ -132,5 +142,5 @@ const History = (() => {
     return div.innerHTML;
   }
 
-  return { formatDateTime, winnerName, sportLabel, sportIcon, filterMatches, renderList, renderDetail };
+  return { formatDateTime, winnerName, sportLabel, sportIcon, filterMatches, renderList, renderDetail, detailPageSize };
 })();
