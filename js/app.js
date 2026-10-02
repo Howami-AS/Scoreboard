@@ -14,13 +14,15 @@
   let currentDetailId = null;
   let deferredInstallPrompt = null;
   let audioCtx = null;
+  let settingsReturnView = 'home';
+  let applyPendingUpdate = () => false;
 
   function showView(name) {
     views.forEach((v) => v.classList.toggle('is-active', v.dataset.view === name));
     window.scrollTo(0, 0);
   }
 
-  async function enterGameDisplay() {
+  async function lockLandscapeOrientation() {
     if (!screen.orientation || !screen.orientation.lock) return;
     try {
       await screen.orientation.lock('landscape-primary');
@@ -30,12 +32,6 @@
       } catch (lockError) {
         // O bloqueio pode não estar disponível neste navegador ou contexto.
       }
-    }
-  }
-
-  function leaveGameDisplay() {
-    if (screen.orientation && screen.orientation.unlock) {
-      screen.orientation.unlock();
     }
   }
 
@@ -102,28 +98,6 @@
     confirmModal.classList.remove('is-active');
     confirmCallback = null;
   });
-
-  // ------------------------------------------------------------------
-  // Modal de vitória
-  // ------------------------------------------------------------------
-  const victoryModal = document.getElementById('modal-victory');
-  function showVictory(m) {
-    const name1 = m.player1, name2 = m.player2;
-    const winnerLabel = m.winner === 'draw' ? 'Empate!' : `${m.winner === 1 ? name1 : name2} venceu!`;
-    const setsLine = m.state.setHistory.map((s) => `${s.p1}-${s.p2}`).join(', ') || '—';
-    document.getElementById('victory-winner').textContent = winnerLabel;
-    document.getElementById('victory-score').textContent = `${m.state.setsWon[0]} × ${m.state.setsWon[1]} sets`;
-    document.getElementById('victory-datetime').textContent = `${setsLine} · ${History.formatDateTime(m.finishedAt || Date.now())}`;
-    victoryModal.classList.add('is-active');
-    vibrate([30, 40, 30]);
-    playBeep(880, 160);
-    if (m.winner !== 'draw') {
-      Voice.announceWinner(m.winner === 1 ? name1 : name2);
-    }
-  }
-  function hideVictory() {
-    victoryModal.classList.remove('is-active');
-  }
 
   // ------------------------------------------------------------------
   // ESCOLHA DO ESPORTE
@@ -262,12 +236,38 @@
   const gameMetaEl = document.getElementById('game-meta');
   const setsP1El = document.getElementById('sets-p1');
   const setsP2El = document.getElementById('sets-p2');
+  const gameViewEl = document.getElementById('view-game');
+  const gameActionsEl = document.getElementById('game-actions');
+  const gameMenuToggleEl = document.querySelector('[data-action="toggle-game-menu"]');
+
+  function setGameMenuHidden(hidden) {
+    gameActionsEl.classList.toggle('is-hidden', hidden);
+    gameViewEl.classList.toggle('menu-hidden', hidden);
+    const label = hidden ? 'Mostrar menu' : 'Ocultar menu';
+    gameMenuToggleEl.setAttribute('aria-expanded', String(!hidden));
+    gameMenuToggleEl.setAttribute('aria-label', label);
+    gameMenuToggleEl.title = label;
+  }
 
   function startGameView() {
     renderGame();
     startTimer(true);
+    setGameMenuHidden(false);
     showView('game');
-    enterGameDisplay();
+    lockLandscapeOrientation();
+  }
+
+  function startDefaultMatch() {
+    const settings = Settings.get();
+    Scoreboard.createMatch({
+      sport: 'volei',
+      player1: 'Time 1',
+      player2: 'Time 2',
+      color1: settings.color1,
+      color2: settings.color2,
+      config: buildVoleiConfigFromSettings(settings),
+    });
+    startGameView();
   }
 
   function renderGame() {
@@ -279,22 +279,32 @@
     p2NameEl.textContent = m.player2;
     [p1WinnerEl, p2WinnerEl].forEach((element, index) => {
       const isWinner = m.winner === index + 1;
+      element.querySelector('.winner-player-name').textContent = isWinner ? (index === 0 ? m.player1 : m.player2) : '';
       element.classList.toggle('is-visible', isWinner);
       element.setAttribute('aria-hidden', String(!isWinner));
+      element.closest('.player-panel').classList.toggle('match-winner', isWinner);
     });
+    const completedMatch = Number.isInteger(m.winner)
+      && m.state.setsWon[m.winner - 1] >= m.config.setsToWin;
+    const lastSet = m.state.setHistory[m.state.setHistory.length - 1];
+    const displayScores = completedMatch && lastSet
+      ? [lastSet.p1, lastSet.p2].map((score) => String(score).replace(/^STB\s+/, ''))
+      : [d.big1, d.big2];
     [p1ScoreEl, p2ScoreEl].forEach((element, index) => {
-      const isWinner = m.winner === index + 1;
-      element.textContent = isWinner ? (index === 0 ? m.player1 : m.player2) : (index === 0 ? d.big1 : d.big2);
-      element.classList.toggle('winner-name', isWinner);
+      element.textContent = displayScores[index];
     });
+    p1NameEl.classList.toggle('hidden', m.winner === 1);
+    p2NameEl.classList.toggle('hidden', m.winner === 2);
     p1SubEl.textContent = d.sub1;
     p2SubEl.textContent = d.sub2;
+    p1SubEl.classList.toggle('hidden', m.sport === 'volei');
+    p2SubEl.classList.toggle('hidden', m.sport === 'volei');
     setsP1El.textContent = d.setsWon[0];
     setsP2El.textContent = d.setsWon[1];
     gameMetaEl.textContent = d.meta;
 
-    document.documentElement.style.setProperty('--p1', m.color1 || '#E24949');
-    document.documentElement.style.setProperty('--p2', m.color2 || '#3E7CE0');
+    document.documentElement.style.setProperty('--p1', m.color1 || '#2196F3');
+    document.documentElement.style.setProperty('--p2', m.color2 || '#F44336');
   }
 
   function bumpScore(player) {
@@ -408,20 +418,21 @@
     afterSets.forEach((sets, index) => {
       if (sets > beforeSets[index]) animateSetVictory(index + 1);
     });
-    vibrate(20);
-    playBeep(660, 80);
+    if (!result.winner) {
+      vibrate(20);
+      playBeep(660, 80);
+    }
 
     const s = Settings.get();
     const m = Scoreboard.getMatch();
     const d = Scoreboard.describe(m);
-    if (s.voiceEnabled) {
+    if (s.voiceEnabled && !result.winner) {
       Voice.announceScore(m.player1, d.big1, m.player2, d.big2);
     }
 
     if (result.winner) {
       stopTimer();
       await Scoreboard.persist();
-      showVictory(m);
     }
   }
 
@@ -433,23 +444,23 @@
       Scoreboard.finishManually();
       renderGame();
       await Scoreboard.persist();
-      showVictory(m);
     });
   }
 
-  function handleUndoPlayer(player) {
-    const wasVictoryVisible = victoryModal.classList.contains('is-active');
-    const ok = Scoreboard.undoPoint(player);
+  function handleUndo(player = null) {
+    const wasWinner = Boolean(Scoreboard.getMatch()?.winner);
+    const ok = player === null ? Scoreboard.undo() : Scoreboard.undoPoint(player);
     if (!ok) {
-      showToast('Nenhum ponto para anular deste lado');
+      showToast(player === null ? 'Nenhum ponto para anular' : 'Nenhum ponto para anular deste lado');
       return;
     }
-    if (wasVictoryVisible) {
-      hideVictory();
-      startTimer(false);
-    }
+    if (wasWinner) startTimer(false);
     renderGame();
     showToast('Ponto anulado');
+  }
+
+  function handleUndoPlayer(player) {
+    handleUndo(player);
   }
 
   const playerPanels = document.querySelectorAll('.player-panel');
@@ -488,13 +499,13 @@
       askConfirm('Sair sem salvar o progresso da partida?', () => {
         stopTimer();
         Scoreboard.clear();
-        leaveGameDisplay();
+        if (applyPendingUpdate()) return;
         showView('home');
       });
     } else {
       stopTimer();
       Scoreboard.clear();
-      leaveGameDisplay();
+      if (applyPendingUpdate()) return;
       showView('home');
     }
   }
@@ -510,12 +521,14 @@
   const filterPeriodEl = document.getElementById('filter-period');
   let allMatches = [];
   let historyPage = 0;
+  let historyReturnView = 'home';
 
   function getHistoryPageSize() {
     return window.innerHeight <= 440 ? 1 : 2;
   }
 
-  async function openHistory() {
+  async function openHistory(returnView) {
+    if (returnView) historyReturnView = returnView;
     allMatches = await Storage.getAllMatches();
     historyPage = 0;
     refreshHistoryList();
@@ -609,7 +622,8 @@
     });
   });
 
-  function openSettingsView() {
+  function openSettingsView(returnView = 'home') {
+    settingsReturnView = returnView;
     const s = Settings.get();
     document.querySelectorAll('.theme-option').forEach((btn) => {
       btn.setAttribute('aria-pressed', String(btn.dataset.themeChoice === s.theme));
@@ -673,14 +687,6 @@
   document.getElementById('setting-sound').addEventListener('change', (e) => Settings.update({ soundEnabled: e.target.checked }));
   document.getElementById('setting-vibration').addEventListener('change', (e) => Settings.update({ vibrationEnabled: e.target.checked }));
 
-  const voiceQuickToggle = document.getElementById('voice-quick-toggle');
-  async function toggleVoiceQuick() {
-    const s = Settings.get();
-    await Settings.update({ voiceEnabled: !s.voiceEnabled });
-    voiceQuickToggle.style.opacity = Settings.get().voiceEnabled ? '1' : '0.45';
-    showToast(Settings.get().voiceEnabled ? 'Voz ativada' : 'Voz desativada');
-  }
-
   // Exportar / importar
   document.getElementById('import-file').addEventListener('change', async (e) => {
     const file = e.target.files[0];
@@ -711,24 +717,29 @@
       case 'pick-sport':
         openNewMatchForm(btn.dataset.sport);
         break;
-      case 'go-history': openHistory(); break;
-      case 'go-settings': openSettingsView(); break;
+      case 'go-history': openHistory('home'); break;
+      case 'game-history': openHistory('game'); break;
+      case 'go-settings': openSettingsView('home'); break;
+      case 'game-settings': openSettingsView('game'); break;
+      case 'toggle-game-menu': setGameMenuHidden(!gameActionsEl.classList.contains('is-hidden')); break;
+      case 'back-settings': showView(settingsReturnView); break;
+      case 'back-history-view': showView(historyReturnView); break;
       case 'back-home': showView('home'); break;
       case 'back-history': showView('history'); openHistory(); break;
       case 'install': triggerInstall(); break;
 
       case 'pick-color':
         colorTargetPlayer = btn.dataset.player;
-        colorInput.value = colorTargetPlayer === '1' ? (pickedColor1 || '#E24949') : (pickedColor2 || '#3E7CE0');
+        colorInput.value = colorTargetPlayer === '1' ? (pickedColor1 || '#2196F3') : (pickedColor2 || '#F44336');
         colorInput.click();
         break;
 
       case 'add': handleAddPoint(Number(btn.dataset.player)); break;
+      case 'undo': handleUndo(); break;
       case 'undo-player': handleUndoPlayer(Number(btn.dataset.player)); break;
       case 'reset-match': handleReset(); break;
       case 'finish-match': handleFinishManually(); break;
       case 'exit-game': handleExitGame(); break;
-      case 'toggle-voice': toggleVoiceQuick(); break;
       case 'edit-name': beginEditName(btn.dataset.player); break;
       case 'toggle-timer': toggleTimer(); break;
       case 'reset-timer': resetTimer(); break;
@@ -753,22 +764,6 @@
         break;
       case 'delete-match': handleDeleteMatch(); break;
       case 'clear-history': handleClearHistory(); break;
-
-      case 'victory-new': {
-        const finishedSport = Scoreboard.getMatch() ? Scoreboard.getMatch().sport : 'volei';
-        hideVictory();
-        stopTimer();
-        Scoreboard.clear();
-        openNewMatchForm(finishedSport);
-        break;
-      }
-      case 'victory-save':
-        hideVictory();
-        stopTimer();
-        Scoreboard.clear();
-        leaveGameDisplay();
-        showView('home');
-        break;
 
       case 'export-data':
         await Settings.exportToFile();
@@ -827,28 +822,37 @@
   // Service Worker
   // ------------------------------------------------------------------
   if ('serviceWorker' in navigator) {
-    const updateModal = document.getElementById('modal-update');
-    const updateNowButton = document.getElementById('update-now');
-    const updateLaterButton = document.getElementById('update-later');
-    let waitingWorker = null;
     let reloadingForUpdate = false;
+    let updateReloadPending = false;
+    let hasController = Boolean(navigator.serviceWorker.controller);
 
-    function showUpdatePrompt(worker) {
-      waitingWorker = worker;
-      updateModal.classList.add('is-active');
-    }
+    applyPendingUpdate = () => {
+      const match = Scoreboard.getMatch();
+      if (!updateReloadPending || (match && (match.events.length || match.winner))) return false;
+      if (reloadingForUpdate) return true;
+      reloadingForUpdate = true;
+      window.location.reload();
+      return true;
+    };
+
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hasController) {
+        hasController = true;
+        return;
+      }
+      updateReloadPending = true;
+      applyPendingUpdate();
+    });
 
     function watchForUpdate(registration) {
-      if (registration.waiting) {
-        showUpdatePrompt(registration.waiting);
-      }
+      if (registration.waiting) registration.waiting.postMessage({ type: 'SKIP_WAITING' });
 
       registration.addEventListener('updatefound', () => {
         const installingWorker = registration.installing;
         if (!installingWorker) return;
         installingWorker.addEventListener('statechange', () => {
           if (installingWorker.state === 'installed' && registration.active) {
-            showUpdatePrompt(registration.waiting || installingWorker);
+            (registration.waiting || installingWorker).postMessage({ type: 'SKIP_WAITING' });
           }
         });
       });
@@ -860,20 +864,6 @@
       checkForUpdate();
       document.addEventListener('visibilitychange', checkForUpdate);
     }
-
-    updateNowButton.addEventListener('click', () => {
-      if (!waitingWorker) return;
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (reloadingForUpdate) return;
-        reloadingForUpdate = true;
-        window.location.reload();
-      }, { once: true });
-      waitingWorker.postMessage({ type: 'SKIP_WAITING' });
-    });
-
-    updateLaterButton.addEventListener('click', () => {
-      updateModal.classList.remove('is-active');
-    });
 
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('service-worker.js')
@@ -889,9 +879,13 @@
   // ------------------------------------------------------------------
   async function init() {
     await Settings.load();
+    const settings = Settings.get();
+    if (settings.color1 === '#E24949' && settings.color2 === '#3E7CE0') {
+      await Settings.update({ color1: '#2196F3', color2: '#F44336' });
+    }
     if (isStandalone()) installBtn.classList.remove('is-visible');
-    voiceQuickToggle.style.opacity = Settings.get().voiceEnabled ? '1' : '0.45';
-    showView('home');
+    lockLandscapeOrientation();
+    startDefaultMatch();
   }
 
   init();

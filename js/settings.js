@@ -10,8 +10,8 @@ const Settings = (() => {
     voiceEnabled: false,
     soundEnabled: true,
     vibrationEnabled: true,
-    color1: '#E24949',
-    color2: '#3E7CE0',
+    color1: '#2196F3',
+    color2: '#F44336',
     volei: {
       setsToWin: 3,        // 3 = melhor de 5 (oficial); 2 = melhor de 3
       pointsPerSet: 25,

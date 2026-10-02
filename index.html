@@ -19,7 +19,7 @@
 <div id="app">
 
   <!-- ===================== HOME ===================== -->
-  <section class="view is-active" id="view-home" data-view="home">
+  <section class="view" id="view-home" data-view="home">
     <div class="screen home-screen">
       <div class="brand">
         <div class="brand-mark" aria-hidden="true"><span></span><span></span></div>
@@ -158,18 +158,24 @@
   </section>
 
   <!-- ===================== PLACAR ===================== -->
-  <section class="view game-view" id="view-game" data-view="game">
+  <section class="view game-view is-active" id="view-game" data-view="game">
     <div class="board">
       <div class="player-panel" data-player="1">
         <button class="edit-btn" data-action="edit-name" data-player="1" aria-label="Editar nome do jogador 1">✎</button>
-        <div class="winner-label" id="p1-winner" aria-hidden="true">Ganhador</div>
+        <div class="winner-label" id="p1-winner" aria-hidden="true">
+          <span class="winner-trophy" aria-hidden="true">🏆</span>
+          <span class="winner-player-name"></span>
+        </div>
         <div class="player-name" id="p1-display-name" data-player="1">Time 1</div>
         <div class="player-sub" id="p1-sub"></div>
         <div class="player-score" id="p1-score">0</div>
       </div>
       <div class="player-panel" data-player="2">
         <button class="edit-btn" data-action="edit-name" data-player="2" aria-label="Editar nome do jogador 2">✎</button>
-        <div class="winner-label" id="p2-winner" aria-hidden="true">Ganhador</div>
+        <div class="winner-label" id="p2-winner" aria-hidden="true">
+          <span class="winner-trophy" aria-hidden="true">🏆</span>
+          <span class="winner-player-name"></span>
+        </div>
         <div class="player-name" id="p2-display-name" data-player="2">Time 2</div>
         <div class="player-sub" id="p2-sub"></div>
         <div class="player-score" id="p2-score">0</div>
@@ -186,12 +192,17 @@
           <span class="crown-score p1" id="sets-p1">0</span>
           <span class="crown-score p2" id="sets-p2">0</span>
         </div>
-        <p class="meta-caption" id="game-meta"></p>
-        <div class="game-actions">
+        <p class="meta-caption visually-hidden" id="game-meta"></p>
+        <button class="menu-toggle-btn" data-action="toggle-game-menu" aria-controls="game-actions" aria-expanded="true" aria-label="Ocultar menu" title="Ocultar menu">☰</button>
+        <div class="game-actions" id="game-actions">
+          <button class="game-control-btn score-control-btn" data-action="add" data-player="1" aria-label="Adicionar ponto ao jogador 1" title="Ponto para o jogador 1">+</button>
+          <button class="game-control-btn" data-action="undo" aria-label="Desfazer último ponto" title="Desfazer último ponto">↶</button>
+          <button class="game-control-btn score-control-btn" data-action="add" data-player="2" aria-label="Adicionar ponto ao jogador 2" title="Ponto para o jogador 2">+</button>
+          <button class="game-control-btn" data-action="game-history" aria-label="Histórico" title="Histórico">▤</button>
           <button class="game-control-btn" data-action="exit-game" aria-label="Voltar" title="Voltar">←</button>
-          <button class="game-control-btn" data-action="toggle-voice" aria-label="Ativar voz" title="Ativar voz" id="voice-quick-toggle">🔊</button>
           <button class="game-control-btn" data-action="reset-match" aria-label="Reiniciar placar" title="Reiniciar placar">↻</button>
           <button class="game-control-btn finish-control-btn" data-action="finish-match" aria-label="Finalizar partida" title="Finalizar partida">✓</button>
+          <button class="game-control-btn" data-action="game-settings" aria-label="Configurações" title="Configurações">⚙</button>
         </div>
       </div>
     </div>
@@ -200,7 +211,7 @@
   <!-- ===================== HISTÓRICO ===================== -->
   <section class="view" id="view-history" data-view="history">
     <div class="topbar">
-      <button class="icon-btn" data-action="back-home" aria-label="Voltar">←</button>
+      <button class="icon-btn" data-action="back-history-view" aria-label="Voltar">←</button>
       <h2>Histórico</h2>
       <button class="icon-btn" data-action="clear-history" aria-label="Limpar histórico">🗑</button>
     </div>
@@ -239,7 +250,7 @@
   <!-- ===================== CONFIGURAÇÕES ===================== -->
   <section class="view" id="view-settings" data-view="settings">
     <div class="topbar">
-      <button class="icon-btn" data-action="back-home" aria-label="Voltar">←</button>
+      <button class="icon-btn" data-action="back-settings" aria-label="Voltar ao placar">←</button>
       <h2>Configurações</h2>
     </div>
     <div class="screen settings-screen">
@@ -356,20 +367,6 @@
 </div>
 
 <!-- ===================== MODAIS ===================== -->
-<div class="modal-backdrop" id="modal-victory">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="victory-title">
-    <div class="modal-trophy" aria-hidden="true">🏆</div>
-    <h2 id="victory-title">Vitória</h2>
-    <p id="victory-winner" style="font-size:1.1rem; font-weight:600;"></p>
-    <p class="modal-score-line" id="victory-score"></p>
-    <p class="modal-sub" id="victory-datetime"></p>
-    <div class="modal-actions">
-      <button class="btn btn-primary btn-block" data-action="victory-new">Nova partida</button>
-      <button class="btn btn-secondary btn-block" data-action="victory-save">Salvar e voltar</button>
-    </div>
-  </div>
-</div>
-
 <div class="modal-backdrop" id="modal-confirm">
   <div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title">
     <h2 id="confirm-title">Confirmar</h2>
@@ -377,17 +374,6 @@
     <div class="modal-actions">
       <button class="btn btn-danger btn-block" id="confirm-ok">Confirmar</button>
       <button class="btn btn-secondary btn-block" id="confirm-cancel">Cancelar</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-backdrop" id="modal-update">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="update-title">
-    <h2 id="update-title">Nova atualização disponível</h2>
-    <p class="modal-sub">Uma nova versão do Scoreboard está pronta para instalar.</p>
-    <div class="modal-actions">
-      <button class="btn btn-primary btn-block" id="update-now">Atualizar agora</button>
-      <button class="btn btn-secondary btn-block" id="update-later">Depois</button>
     </div>
   </div>
 </div>

@@ -5,7 +5,7 @@
    segundo plano (stale-while-revalidate) quando há rede disponível.
    ========================================================================== */
 
-const CACHE_VERSION = 'scoreboard-v7';
+const CACHE_VERSION = 'scoreboard-v21';
 const PRECACHE_URLS = [
   './',
   './index.html',
@@ -29,10 +29,17 @@ const PRECACHE_URLS = [
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_VERSION)
-      .then((cache) => cache.addAll(PRECACHE_URLS))
-  );
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_VERSION);
+    await Promise.all(PRECACHE_URLS.map(async (path) => {
+      const resourceURL = new URL(path, self.registration.scope);
+      const fetchURL = new URL(resourceURL);
+      fetchURL.searchParams.set('__precache', CACHE_VERSION);
+      const response = await fetch(new Request(fetchURL, { cache: 'reload' }));
+      if (!response.ok) throw new Error(`Falha ao pré-carregar ${path}`);
+      await cache.put(resourceURL, response);
+    }));
+  })());
 });
 
 self.addEventListener('message', (event) => {
